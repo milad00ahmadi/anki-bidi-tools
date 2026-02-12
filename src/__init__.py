@@ -3,7 +3,7 @@ from typing import Any, List, Tuple
 
 from aqt import gui_hooks, mw
 from aqt.webview import WebContent
-from aqt.editor import Editor
+from aqt.editor import Editor, EditorWebView
 from aqt.qt import *
 from aqt.utils import qtMenuShortcutWorkaround
 
@@ -33,11 +33,11 @@ def ltr_block_action(editor: Editor):
 def rtl_block_action(editor: Editor):
     wrap_block_in_dir(editor, "rtl")
 
-def ltr_inline_action(editor: Editor):
-    wrap_inline_in_dir(editor, "ltr")
+def ltr_inline_action(editor: EditorWebView):
+    wrap_inline_in_dir(editor.editor, "ltr")
 
-def rtl_inline_action(editor: Editor):
-    wrap_inline_in_dir(editor, "rtl")
+def rtl_inline_action(editor: EditorWebView):
+    wrap_inline_in_dir(editor.editor, "rtl")
 
 
 chars = (
@@ -58,6 +58,15 @@ chars = (
 def insert_char(editor: Editor, char: str):
     editor.web.eval(f"document.execCommand('inserttext', false, '{char}');")
 
+
+def on_editor_will_show_context_menu(webview_editor: EditorWebView, m: QMenu) -> None:
+    for text, handler, shortcut in actions[2:]:
+        a = m.addAction(text, lambda cb=handler: cb(webview_editor))
+        if shortcut:
+            a.setShortcut(QKeySequence(shortcut))
+
+    m.addMenu(create_insert_menu(webview_editor.editor))
+    qtMenuShortcutWorkaround(m)
 
 def create_insert_menu(editor: Editor) -> QMenu:
     m = QMenu(editor.mw)
@@ -97,20 +106,11 @@ def add_editor_button(buttons: List[str], editor: Editor) -> None:
         btn = editor.addButton(
             icon=os.path.join(addon_dir, f"icons/{label}.svg"),
             cmd=f"bidi_tools_{label}",
-            tip=f"{text} \u200E({shortcut})",
+            tip=f"{text} ‎({shortcut})",
             func=handler,
             keys=shortcut,
         )
-        buttons.append(btn)
-
-    button = editor.addButton(
-        icon=os.path.join(addon_dir, "icons/icon.svg"),
-        cmd="bidi_tools",
-        tip=tr('addon_name'),
-        func=on_button_click
-    )
-    buttons.append(button)
-
+        buttons.insert(i, btn)
 
 def add_shortcuts(shortcuts: List[Tuple], editor: Editor) -> None:
     for text, handler, shortcut in actions[2:]:
@@ -121,3 +121,4 @@ def add_shortcuts(shortcuts: List[Tuple], editor: Editor) -> None:
 gui_hooks.editor_did_init_buttons.append(add_editor_button)
 gui_hooks.editor_did_init_shortcuts.append(add_shortcuts)
 gui_hooks.webview_will_set_content.append(load_web)
+gui_hooks.editor_will_show_context_menu.append(on_editor_will_show_context_menu)
