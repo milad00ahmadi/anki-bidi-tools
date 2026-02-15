@@ -21,7 +21,8 @@ def load_web(webcontent: WebContent, context: Any):
 
 
 def wrap_block_in_dir(editor: Editor, direction: str) -> None:
-    editor.web.eval(f'BidiToolsSetBlockDir("{direction}");')
+    modify_text_align = "true" if config.get("auto_align_on_direction_change", False) else "false"
+    editor.web.eval(f'BidiToolsSetBlockDir("{direction}", {modify_text_align});')
 
 def wrap_inline_in_dir(editor: Editor, direction: str) -> None:
     editor.web.eval(f'BidiToolsSetInlineDir("{direction}");')
