@@ -96,7 +96,7 @@ def add_editor_button(buttons: List[str], editor: Editor) -> None:
         btn = editor.addButton(
             icon=os.path.join(addon_dir, f"icons/{label}.svg"),
             cmd=f"bidi_tools_{label}",
-            tip=f"{text} ({shortcut})",
+            tip=f"{text} \u200E({shortcut})",
             func=handler,
             keys=shortcut,
         )
